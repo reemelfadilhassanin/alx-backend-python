@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-More involved type annotations
+get val from dic
 """
 from typing import Mapping, Any, Union, TypeVar
 T = TypeVar('T')
