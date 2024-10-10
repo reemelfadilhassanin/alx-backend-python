@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-This module to safely get a value from a dictionary.
+This module to safely get a val from a dic.
 """
 
 from typing import Mapping, Any, TypeVar, Union
