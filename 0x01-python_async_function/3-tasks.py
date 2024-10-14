@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 """this for tasks
     """
-
 import asyncio
+wait_random = __import__('0-basic_async_syntax').wait_random
 
-task_wait_random = __import__('3-tasks').task_wait_random
 
+def task_wait_random(max_delay: int) -> asyncio.Task:
+    """
+    Creates an asyncio Task for the wait_random coroutine.
 
-async def test(max_delay: int) -> float:
-    task = task_wait_random(max_delay)
-    await task
-    print(task.__class__)
+    Args:
+        max_delay (int): The maximum delay in seconds.
 
-asyncio.run(test(5))
+    Returns:
+        asyncio.Task: The asyncio Task object for wait_random.
+    """
+    return asyncio.create_task(wait_random(max_delay))
