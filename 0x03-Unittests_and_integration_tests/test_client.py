@@ -14,13 +14,12 @@ class TestGithubOrgClient(unittest.TestCase):
         ("google",),
         ("abc",),
     ])
-    @patch('client.get_json')  # Adjust the import path according to your project structure
+    @patch('client.get_json')
     def test_org(self, org_name: str, mock_get_json: Mock) -> None:
         """Tests that GithubOrgClient.org returns the correct value."""
         # Arrange
-        expected_response = {"org": org_name}  # Adjust based on the expected output structure
+        expected_response = {"org": org_name}
         mock_get_json.return_value = expected_response
-        
         client = GithubOrgClient(org_name)
 
         # Act
@@ -28,7 +27,9 @@ class TestGithubOrgClient(unittest.TestCase):
 
         # Assert
         self.assertEqual(result, expected_response)
-        mock_get_json.assert_called_once_with(f"https://api.github.com/orgs/{org_name}")
+        mock_get_json.assert_called_once_with(
+            f"https://api.github.com/orgs/{org_name}")
+
 
 if __name__ == '__main__':
     unittest.main()
