@@ -40,12 +40,11 @@ class TestAccessNestedMap(unittest.TestCase):
 
 class TestGetJson(unittest.TestCase):
     """Tests the `get_json` function."""
-    
+
     @parameterized.expand([
         ("http://example.com", {"payload": True}),
         ("http://holberton.io", {"payload": False}),
     ])
-    @patch('utils.requests.get')
     def test_get_json(self, test_url: str, test_payload: Dict) -> None:
         """Tests `get_json`'s output."""
         # Create a mock response object with a json method
@@ -53,17 +52,11 @@ class TestGetJson(unittest.TestCase):
         mock_response.json.return_value = test_payload
         
         # Patch requests.get to return the mock response
-        requests_get = patch('utils.requests.get', return_value=mock_response)
-        requests_get.start()
-        
-        try:
+        with patch('utils.requests.get', return_value=mock_response) as mock_get:
             # Call the function being tested
             self.assertEqual(get_json(test_url), test_payload)
             # Verify that requests.get was called once with test_url
-            mock_response.json.assert_called_once()
-            requests_get.assert_called_once_with(test_url)
-        finally:
-            requests_get.stop()
+            mock_get.assert_called_once_with(test_url)
 
 if __name__ == '__main__':
     unittest.main()
