@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""A module for testing the utils module.
+"""this module for testing the utils
 """
 import unittest
 from typing import Dict, Tuple, Union
