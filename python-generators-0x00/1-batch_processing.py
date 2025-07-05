@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import seed
 
-# Function to stream users in batches
 def stream_users_in_batches(batch_size):
     connection = seed.connect_to_prodev()
     cursor = connection.cursor(dictionary=True)
@@ -16,7 +15,6 @@ def stream_users_in_batches(batch_size):
     cursor.close()
     connection.close()
 
-# Function to process each batch and filter users over age 25
 def batch_processing(batch_size):
     for batch in stream_users_in_batches(batch_size):
         for user in batch:
