@@ -1,6 +1,12 @@
 from rest_framework_nested.routers import DefaultRouter, NestedDefaultRouter
 from django.urls import path, include
 from .views import ConversationViewSet, MessageViewSet
+from django.urls import path, include
+from .chats import auth
+
+urlpatterns = [
+    path('auth/', include(auth.urlpatterns)),
+]
 
 # Create base router for conversations
 router = DefaultRouter()
