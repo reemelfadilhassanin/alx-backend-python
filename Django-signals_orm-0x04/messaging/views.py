@@ -1,22 +1,21 @@
-from django.contrib.auth import logout
-from django.contrib.auth.models import User
-from django.shortcuts import redirect, render
-from django.views.decorators.cache import cache_page
-from django.utils.decorators import method_decorator
-from django.views.generic import ListView
+from django.shortcuts import render
 from .models import Message
+from django.contrib.auth.decorators import login_required
+from django.db.models import Prefetch
 
-def delete_user(request):
-    if request.user.is_authenticated:
-        user = request.user
-        logout(request)
-        user.delete()
-    return redirect('home')
+@login_required
+def inbox(request):
+    # Top-level messages only (not replies), with their replies prefetched
+    messages = (
+        Message.objects
+        .filter(recipient=request.user, parent_message__isnull=True)
+        .select_related('sender', 'recipient')
+        .prefetch_related(
+            Prefetch('replies', queryset=Message.objects.select_related('sender'))
+        )
+        .order_by('-timestamp')
+    )
 
-@method_decorator(cache_page(60), name='dispatch')
-class ConversationListView(ListView):
-    model = Message
-    template_name = 'messaging/conversation_list.html'
-
-    def get_queryset(self):
-        return Message.objects.filter(receiver=self.request.user)
+    return render(request, 'messaging/inbox.html', {
+        'messages': messages
+    })
