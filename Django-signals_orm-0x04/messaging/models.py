@@ -14,20 +14,29 @@ class Message(models.Model):
     content = models.TextField()
     timestamp = models.DateTimeField(default=timezone.now)
 
-    # Required fields for edit tracking
+    # Edit tracking
     edited = models.BooleanField(default=False)
     edited_by = models.ForeignKey(
         User, null=True, blank=True,
         on_delete=models.SET_NULL,
         related_name='edited_messages'
     )
-    edited_at = models.DateTimeField(null=True, blank=True)  # <- exact name required
+    edited_at = models.DateTimeField(null=True, blank=True)
+
+    # NEW: parent_message for replies
+    parent_message = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        related_name='replies',
+        on_delete=models.CASCADE
+    )
 
     def __str__(self):
         return f"{self.sender.username} to {self.recipient.username}: {self.content[:30]}"
 
 
-class MessageHistory(models.Model):  # <- exact name required
+class MessageHistory(models.Model):
     message = models.ForeignKey(
         Message, on_delete=models.CASCADE, related_name='history'
     )
