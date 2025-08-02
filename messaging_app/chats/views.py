@@ -1,28 +1,20 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import cache_page
+from messaging.models import Message
 
-# Create your views here.
-from rest_framework import viewsets, permissions
-from rest_framework.response import Response
-from rest_framework.decorators import action
-from .models import Conversation, Message
-from .serializers import ConversationSerializer, MessageSerializer
+@login_required
+@cache_page(60)
+def conversation_view(request):
+    threads = Message.objects.filter(receiver=request.user, parent_message__isnull=True)\
+        .select_related('sender', 'receiver')\
+        .prefetch_related('replies__sender')  # fetch replies for threading
 
-class ConversationViewSet(viewsets.ModelViewSet):
-    queryset = Conversation.objects.all()
-    serializer_class = ConversationSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    return render(request, 'chat/conversation_list.html', {
+        'threads': threads,
+    })
 
-    def perform_create(self, serializer):
-        # Automatically add the request user as a participant if needed
-        conversation = serializer.save()
-        conversation.participants.add(self.request.user)
-        conversation.save()
-
-class MessageViewSet(viewsets.ModelViewSet):
-    queryset = Message.objects.all()
-    serializer_class = MessageSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def perform_create(self, serializer):
-        # Automatically set the sender to the current user
-        serializer.save(sender=self.request.user)
+@login_required
+def delete_user(request):
+    request.user.delete()
+    return redirect('home')

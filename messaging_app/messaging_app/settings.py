@@ -130,6 +130,22 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
 }
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'chats.pagination.MessagePagination',
+    'PAGE_SIZE': 20,
+}
 
 
 AUTH_USER_MODEL = 'chats.User'
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}
+INSTALLED_APPS = [
+    # ... other apps ...
+    'messaging.apps.MessagingConfig',
+    'chats',
+    # ...
+]

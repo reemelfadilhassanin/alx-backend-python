@@ -1,33 +1,30 @@
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
-from django.contrib.auth import get_user_model
-from .models import Message, MessageHistory
-from messaging.models import Message, MessageHistory
-from django.conf import settings
-
-User = get_user_model()
+from django.contrib.auth.models import User
+from .models import Message, Notification, MessageHistory
 
 @receiver(post_save, sender=Message)
-def notify_receiver(sender, instance, created, **kwargs):
+def create_notification(sender, instance, created, **kwargs):
     if created:
-        # أنشئ Notification هنا (إذا أردت)
-        pass
+        Notification.objects.create(user=instance.receiver, message=instance)
 
 @receiver(pre_save, sender=Message)
 def log_message_edit(sender, instance, **kwargs):
-    if instance.id:
-        old = Message.objects.get(pk=instance.id)
-        if old.content != instance.content:
+    if instance.pk:
+        try:
+            previous = Message.objects.get(pk=instance.pk)
+        except Message.DoesNotExist:
+            return
+        if previous.content != instance.content:
+            MessageHistory.objects.create(message=instance, old_content=previous.content)
             instance.edited = True
-            instance.edited_by = instance.sender  # أو من يقوم بالتعديل
-            instance.edited_at = timezone.now()
-            MessageHistory.objects.create(
-                message=instance, old_content=old.content,
-                edited_by=instance.edited_by, edited_at=instance.edited_at
-            )
 
 @receiver(post_delete, sender=User)
-def delete_user_related_data(sender, instance, **kwargs):
+def delete_related_data(sender, instance, **kwargs):
+    # Deletes messages where user sent or received
     Message.objects.filter(sender=instance).delete()
-    Message.objects.filter(recipient=instance).delete()
+    Message.objects.filter(receiver=instance).delete()
+    # Deletes notifications
+    Notification.objects.filter(user=instance).delete()
+    # Deletes history entries for messages of deleted user
     MessageHistory.objects.filter(message__sender=instance).delete()

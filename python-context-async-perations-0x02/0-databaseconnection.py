@@ -17,3 +17,4 @@ with DatabaseConnection() as conn:
     cursor.execute("SELECT * FROM users")
     results = cursor.fetchall()
     print(results)
+              
