@@ -1,9 +1,16 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
 from messaging.models import Message
 from django.db.models import Prefetch
 
-# Recursive helper to get all nested replies
+@login_required
+def delete_user(request):
+    user = request.user
+    user.delete()
+    messages.success(request, "Your account has been deleted.")
+    return redirect('account_deleted')
+
 def get_all_replies(message):
     replies = []
     children = message.replies.all()
@@ -16,21 +23,17 @@ def get_all_replies(message):
 def threaded_conversation_view(request, conversation_user_id):
     from django.contrib.auth.models import User
     other_user = get_object_or_404(User, id=conversation_user_id)
-
-    # Fetch top-level messages in the conversation
-    messages = Message.objects.filter(
+    messages_qs = Message.objects.filter(
         sender=request.user, receiver=other_user, parent_message__isnull=True
     ).select_related('sender', 'receiver').prefetch_related(
         Prefetch('replies', queryset=Message.objects.select_related('sender'))
     )
-
-    # Build thread trees
     threads = []
-    for msg in messages:
-        thread = {
-            'message': msg,
-            'replies': get_all_replies(msg)
-        }
-        threads.append(thread)
-
+    for msg in messages_qs:
+        threads.append({'message': msg, 'replies': get_all_replies(msg)})
     return render(request, 'threaded_conversation.html', {'threads': threads})
+
+@login_required
+def unread_messages_view(request):
+    unread_messages = Message.unread.unread_for_user(request.user)
+    return render(request, 'unread_messages.html', {'messages': unread_messages})
