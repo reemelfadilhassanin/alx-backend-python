@@ -9,6 +9,28 @@ from messaging.models import Message
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from messaging.models import Message
+from django.views.decorators.cache import cache_page
+@cache_page(60)  # ✅ Caches the view for 60 seconds
+@login_required
+def threaded_conversation_view(request, conversation_user_id):
+    from django.contrib.auth.models import User
+    from messaging.models import Message
+    from django.db.models import Prefetch
+
+    other_user = get_object_or_404(User, id=conversation_user_id)
+
+    messages_qs = Message.objects.filter(
+        sender=request.user, receiver=other_user, parent_message__isnull=True
+    ).select_related('sender', 'receiver').prefetch_related(
+        Prefetch('replies', queryset=Message.objects.select_related('sender'))
+    )
+
+    threads = []
+    for msg in messages_qs:
+        threads.append({'message': msg, 'replies': get_all_replies(msg)})
+
+    return render(request, 'threaded_conversation.html', {'threads': threads})
+
 
 @login_required
 def unread_messages_view(request):
