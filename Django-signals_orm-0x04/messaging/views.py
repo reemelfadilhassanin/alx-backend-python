@@ -3,6 +3,15 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from messaging.models import Message
 from django.db.models import Prefetch
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from messaging.models import Message
+
+@login_required
+def unread_messages_view(request):
+    unread_messages = Message.unread.unread_for_user(request.user)
+    return render(request, 'unread_messages.html', {'messages': unread_messages})
+
 
 @login_required
 def delete_user(request):
