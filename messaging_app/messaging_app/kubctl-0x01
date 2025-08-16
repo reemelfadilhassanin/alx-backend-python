@@ -1,0 +1,12 @@
+#!/bin/bash
+# Scale replicas to 3
+kubectl scale deployment messaging-app --replicas=3
+
+# Verify pods
+kubectl get pods
+
+# Load testing (تحتاج wrk مثبت عندك)
+wrk -t4 -c200 -d30s http://<minikube-ip>:8000
+
+# Monitor resources
+kubectl top pods
