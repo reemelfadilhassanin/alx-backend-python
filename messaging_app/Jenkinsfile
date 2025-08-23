@@ -1,0 +1,33 @@
+pipeline {
+    agent any
+
+    environment {
+        GIT_CREDENTIALS_ID = 'github-creds'
+    }
+
+    stages {
+        stage('Clone repository') {
+            steps {
+                git credentialsId: "${GIT_CREDENTIALS_ID}", url: 'https://github.com/YOUR_USERNAME/alx-backend-python.git'
+            }
+        }
+
+        stage('Install dependencies and run tests') {
+            steps {
+                sh '''
+                cd messaging_app
+                python3 -m venv venv
+                source venv/bin/activate
+                pip install -r requirements.txt
+                pytest --junitxml=test-report.xml
+                '''
+            }
+        }
+
+        stage('Archive Test Results') {
+            steps {
+                junit 'messaging_app/test-report.xml'
+            }
+        }
+    }
+}
