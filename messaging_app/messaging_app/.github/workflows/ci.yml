@@ -49,10 +49,32 @@ jobs:
           source venv/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
+          pip install flake8 coverage
 
-      - name: Run Django tests
+      - name: Run flake8 Lint
         run: |
           cd messaging_app
           source venv/bin/activate
-          python manage.py migrate
-          python manage.py test
+          # Fail if any linting errors exist
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
+
+      - name: Run Django tests with coverage
+        run: |
+          cd messaging_app
+          source venv/bin/activate
+          coverage run manage.py test
+          coverage xml
+          coverage html
+
+      - name: Upload coverage report (HTML)
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html
+          path: messaging_app/htmlcov/
+
+      - name: Upload coverage report (XML)
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: messaging_app/coverage.xml
