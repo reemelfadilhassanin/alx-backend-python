@@ -1,15 +1,18 @@
 pipeline {
     agent any
 
+    environment {
+        DOCKER_IMAGE = "your-dockerhub-username/messaging_app"
+        DOCKER_TAG = "latest"
+    }
+
     tools {
-        // استخدام Python 3 (ممكن تغيّر حسب النسخة المثبتة عندك)
         python "Python3"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // اسحب الكود من GitHub (الريبو لازم يكون مربوط بالكريدنشلز)
                 git branch: 'main',
                     credentialsId: '44b6510e-c45a-4248-8df7-e43c0f8451f5',
                     url: 'https://github.com/reemelfadilhassanin/alx-backend-python.git'
@@ -42,6 +45,29 @@ pipeline {
                 }
             }
         }
+
+        stage('Build Docker Image') {
+            steps {
+                sh '''
+                    cd messaging_app
+                    docker build -t $DOCKER_IMAGE:$DOCKER_TAG .
+                '''
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials-id',
+                                                 usernameVariable: 'DOCKER_USER',
+                                                 passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push $DOCKER_IMAGE:$DOCKER_TAG
+                        docker logout
+                    '''
+                }
+            }
+        }
     }
 
     post {
@@ -52,7 +78,7 @@ pipeline {
             echo "Pipeline failed ❌"
         }
         success {
-            echo "Pipeline succeeded ✅"
+            echo "Pipeline succeeded ✅ (Tests passed & Docker image pushed 🚀)"
         }
     }
 }
