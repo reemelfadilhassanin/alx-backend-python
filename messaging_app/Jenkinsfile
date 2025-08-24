@@ -1,52 +1,41 @@
 pipeline {
     agent any
 
+    tools {
+        python 'Python3' // Set this up in ShiningPanda later
+    }
+
     environment {
-        GIT_CREDENTIALS_ID = 'github-creds'
+        GITHUB_CREDENTIALS = credentials('44b6510e-c45a-4248-8df7-e43c0f8451f5') // Use your actual ID
     }
 
     stages {
         stage('Clone repository') {
             steps {
-                git credentialsId: "${GIT_CREDENTIALS_ID}", url: 'https://github.com/YOUR_USERNAME/alx-backend-python.git'
+                git credentialsId: "${GITHUB_CREDENTIALS}", url: 'https://github.com/reemelfadilhassanin/alx-backend-python.git'
             }
         }
 
-        stage('Install dependencies and run tests') {
+        stage('Setup Python Environment') {
             steps {
-                sh '''
-                cd messaging_app
-                python3 -m venv venv
-                source venv/bin/activate
-                pip install -r requirements.txt
-                pytest --junitxml=test-report.xml
-                '''
+                withPythonEnv('Python3') {
+                    sh 'pip install -r messaging_app/requirements.txt'
+                }
             }
         }
 
-        stage('Archive Test Results') {
+        stage('Run Tests') {
             steps {
-                junit 'messaging_app/test-report.xml'
+                withPythonEnv('Python3') {
+                    sh 'pytest messaging_app/tests/ --junitxml=report.xml'
+                }
+            }
+        }
+
+        stage('Publish Report') {
+            steps {
+                junit 'report.xml'
             }
         }
     }
 }
-        stage('Build Docker Image') {
-            steps {
-                sh '''
-                cd messaging_app
-                docker build -t yourdockerhubusername/messaging_app:latest .
-                '''
-            }
-        }
-
-        stage('Push Docker Image to Docker Hub') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                    docker push yourdockerhubusername/messaging_app:latest
-                    '''
-                }
-            }
-        }
